@@ -1,0 +1,26 @@
+Source: argbigga
+Build-Depends:
+	debhelper-compat (= 12),
+	dh-python,
+	dh-sequence-python3,
+	python3,
+	python3-all,
+	python3-setuptools,
+Homepage: https://github.com/wgnetns
+Maintainer: David Joaquín Shourabi Porcel <david@djsp.eu>
+Priority: optional
+Rules-Requires-Root: no
+Section: admin
+Standards-Version: 4.5.0
+Vcs-Browser: https://github.com/wgnetns/argbigga/tree/ubuntu/focal
+Vcs-Git: https://github.com/wgnetns/argbigga.git
+X-Python3-Version: >= 3.8
+
+Package: argbigga
+Architecture: all
+Depends:
+	${misc:Depends},
+	${python3:Depends},
+Description: Wireguard-ed network namespace setup framework
+ Framework to manage Linux network namespaces with a Wireguard interface as
+ single route for outbound (and inbound) traffic.

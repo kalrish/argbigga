@@ -39,4 +39,5 @@ setuptools.setup(
     # https://packages.ubuntu.com/focal/python3
     python_requires='>= 3.8.0',
     url='https://github.com/wgnetns/argbigga',
+    version='1.0.0',
 )

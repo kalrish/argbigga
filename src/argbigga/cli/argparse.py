@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 
+import argbigga
 import argbigga.cli.subcommands
 import argbigga.cli.subcommands.help
 import argbigga.modutil
@@ -48,6 +49,13 @@ def build_argument_parser(
         default=default_logging_kwargs,
         dest='logging_kwargs',
         help='emit informational messages to stderr',
+    )
+
+    argument_parser.add_argument(
+        '--version',
+        action='version',
+        help='display version and exit',
+        version=argbigga.version,
     )
 
     subcommand_modules = argbigga.modutil.load_submodules(

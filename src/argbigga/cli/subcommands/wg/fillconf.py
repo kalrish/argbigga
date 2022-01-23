@@ -29,10 +29,10 @@ def build_argument_parser(
 
     argument_parser.add_argument(
         '--empty',
-        action='store_true',
+        action=argparse.BooleanOptionalAction,
         default=False,
         dest='empty_directory',
-        help='empty output directory if it already exists',
+        help='whether to empty output directory if it already exists',
     )
 
     argument_parser.add_argument(
@@ -65,10 +65,10 @@ def build_argument_parser(
 
     argument_parser.add_argument(
         '--multihopping',
-        action='store_true',
+        action=argparse.BooleanOptionalAction,
         default=False,
         dest='multihopping',
-        help='generate multihopping configurations (implicitly enabled when any of the --out-* options is specified)',
+        help='whether to generate multihopping configurations (implicitly enabled when any of the --out-* options is specified)',
     )
 
     argument_parser.add_argument(

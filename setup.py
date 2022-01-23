@@ -23,8 +23,6 @@ setuptools.setup(
         ],
     },
     install_requires=[
-        # argbigga should run on Ubuntu 20.04
-        # https://packages.ubuntu.com/focal/python3-requests
         'requests >= 2.22.0',
     ],
     long_description=__doc__,
@@ -35,9 +33,7 @@ setuptools.setup(
     package_dir={
         '': 'src',
     },
-    # argbigga should run on Ubuntu 20.04
-    # https://packages.ubuntu.com/focal/python3
-    python_requires='>= 3.8.0',
+    python_requires='>= 3.9.0',
     url='https://github.com/wgnetns/argbigga',
     version='1.0.0',
 )

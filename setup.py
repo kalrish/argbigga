@@ -22,6 +22,14 @@ setuptools.setup(
             'argbigga = argbigga.cli.main:entry_point',
         ],
     },
+    extras_require={
+        'wg_keygen_cryptography': [
+            'cryptography >= 2.8',
+        ],
+        'wg_keygen_nacl': [
+            'PyNaCl >= 1.3.0',
+        ],
+    },
     install_requires=[
         'requests >= 2.22.0',
     ],

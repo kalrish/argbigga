@@ -28,6 +28,44 @@ def build_argument_parser(
     )
 
     argument_parser.add_argument(
+        '--version',
+        action='version',
+        help='display version and exit',
+        version=argbigga.version,
+    )
+
+#    configuration_group = argument_parser.add_argument_group(
+#        description='foo the bar',
+#        title='configuration options',
+#    )
+#
+#    configuration_group.add_argument(
+#        '--config',
+#        action='store',
+#        default='/etc/argbigga/config.ini',
+#        dest='configuration_file',
+#        help='name without the .ini extension of a configuration file in /etc/argbigga/, or path to a configuration file',
+#        #metavar='NAME',
+#        type=argparse.FileType(
+#            mode='r',
+#        ),
+#    )
+#
+#    configuration_group.add_argument(
+#        '--profile',
+#        action='store',
+#        dest='configuration_profile',
+#        help='profile to load within configuration file',
+#        metavar='NAME',
+#    )
+
+#    debugging_group = argument_parser.add_argument_group(
+#        description='Control emission of informational messages.',
+#        title='debugging options',
+#    )
+
+    argument_parser.add_argument(
+#    debugging_group.add_argument(
         '--debug',
         action='store_const',
         const={
@@ -40,6 +78,7 @@ def build_argument_parser(
     )
 
     argument_parser.add_argument(
+#    debugging_group.add_argument(
         '--verbose',
         action='store_const',
         const={
@@ -51,13 +90,6 @@ def build_argument_parser(
         help='emit informational messages to stderr',
     )
 
-    argument_parser.add_argument(
-        '--version',
-        action='version',
-        help='display version and exit',
-        version=argbigga.version,
-    )
-
     subcommand_modules = argbigga.modutil.load_submodules(
         package=argbigga.cli.subcommands.__name__,
         paths=argbigga.cli.subcommands.__path__,
@@ -65,7 +97,7 @@ def build_argument_parser(
 
     subcommand_parsers = argument_parser.add_subparsers(
         required=True,
-        title='actions',
+        title='subcommands',
     )
 
     subtree = load_subcommand_argument_parsers(
@@ -94,10 +126,19 @@ def load_subcommand_argument_parsers(
     for subcommand_name, subcommand_module in iterator:
         subcommand_parser = argument_parser.add_parser(
             subcommand_name,
-            aliases=subcommand_module.aliases,
+            aliases=getattr(
+                subcommand_module,
+                'aliases',
+                [
+                ],
+            ),
             description=subcommand_module.description,
             epilog=subcommand_module.epilog,
-            formatter_class=subcommand_module.help_formatter_class,
+            formatter_class=getattr(
+                subcommand_module,
+                'help_formatter_class',
+                argparse.HelpFormatter,
+            ),
             help=subcommand_module.help,
         )
 

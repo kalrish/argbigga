@@ -7,6 +7,20 @@ logger = logging.getLogger(
 )
 
 
+def add_key(
+            account,
+            key,
+        ):
+    response = argbigga.mullvad.requests_session.post(
+        'https://api.mullvad.net/wg/',
+        data='account=' + account,
+        params={
+            'pubkey': key,
+        },
+        timeout=10,
+    )
+
+
 def get_servers(
         ):
     servers = {

@@ -131,7 +131,8 @@ def run(
             arguments,
         ):
     if arguments.key_generation_method == 'cryptography':
-        import cryptography.hazmat.primitives
-        import cryptography.hazmat.primitives.asymmetric.x25519
+        private_key = argbigga.wireguard.generate_private_key_with_cryptography(
+        )
     elif arguments.key_generation_method == 'PyNaCl':
-        import nacl.public
+        private_key = argbigga.wireguard.generate_private_key_with_nacl(
+        )

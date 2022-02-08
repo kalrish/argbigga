@@ -28,7 +28,7 @@ def build_argument_parser(
     )
 
     wireguard_group.add_argument(
-        '--wireguard-key-method',
+        '--wireguard-keygen-method',
         action='store',
         choices=[
             'cryptography',
@@ -66,7 +66,7 @@ def build_argument_parser(
     mullvad_entry_group.add_argument(
         '--mullvad-entry-locations',
         dest='mullvad_entry_locations',
-        help='countries and/or cities at which to enter Mullvad VPN (if multiple are specified, one will be chosen randomly)',
+        help='countries and/or cities at which to enter the Mullvad network (if multiple are specified, one will be chosen randomly)',
         metavar='SPEC',
         nargs='+',
     )
@@ -86,7 +86,7 @@ def build_argument_parser(
     mullvad_exit_group.add_argument(
         '--mullvad-exit-locations',
         dest='mullvad_exit_locations',
-        help='countries and/or cities at which to exit Mullvad VPN (if multiple are specified, one will be chosen randomly)',
+        help='countries and/or cities at which to exit the Mullvad network (if multiple are specified, one will be chosen randomly)',
         metavar='SPEC',
         nargs='+',
     )
@@ -94,7 +94,7 @@ def build_argument_parser(
     mullvad_exit_group.add_argument(
         '--mullvad-exit-servers',
         dest='mullvad_exit_servers',
-        help='Mullvad server at which to exit Mullvad VPN (if multiple are specified, one will be chosen randomly)',
+        help='Mullvad server at which to exit the Mullvad network (if multiple are specified, one will be chosen randomly)',
         metavar='MULLVAD_HOSTNAME',
         nargs='+',
     )

@@ -2,6 +2,8 @@ import logging
 
 import argbigga.cli.argparse
 import argbigga.cli.logging
+import argbigga.cli.output
+import argbigga.cli.subcommands
 
 logger = logging.getLogger(
     __name__,
@@ -10,11 +12,7 @@ logger = logging.getLogger(
 
 def entry_point(
         ):
-    argbigga.cli.logging.set_up(
-    )
-
-    logger.debug(
-        'logging setup initialized',
+    argbigga.cli.logging.prepare(
     )
 
     argument_parser = argbigga.cli.argparse.build_argument_parser(
@@ -23,12 +21,29 @@ def entry_point(
     arguments = argument_parser.parse_args(
     )
 
-    argbigga.cli.logging.post(
-        **arguments.logging_kwargs,
+    argbigga.cli.logging.initialize(
+        destination=arguments.logs_destination,
+        mode=arguments.logging_mode,
     )
 
-    return_code = arguments.run(
+    execute_subcommand = arguments.subcommand
+    subcommand_result = execute_subcommand(
         arguments=arguments,
     )
 
-    return return_code
+    assert isinstance(
+            subcommand_result,
+            argbigga.cli.subcommands.SubcommandResult,
+        )
+
+    if subcommand_result.data is not None:
+        argbigga.cli.output.output(
+            data=subcommand_result.data,
+            file=arguments.output_file,
+            format=arguments.output_format,
+        )
+
+    argbigga.cli.logging.finalize(
+    )
+
+    return subcommand_result.code

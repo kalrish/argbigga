@@ -1,29 +1,128 @@
 import argparse
 import logging
 import os
+import sys
 
 import argbigga
 import argbigga.cli.subcommands
 import argbigga.cli.subcommands.help
-import argbigga.modutil
+import argbigga.modules
 
 logger = logging.getLogger(
     __name__,
 )
 
 
+class FileLoadType(
+            argparse.FileType,
+        ):
+    def __init__(
+                self,
+            ):
+        self.parent = super(
+        )
+        self.parent.__init__(
+            mode='r',
+        )
+
+    def __call__(
+                self,
+                string,
+            ):
+        file = self.parent.__call__(
+            string,
+        )
+        content = file.read(
+        )
+        account_number = content.rstrip(
+            "\n",
+        )
+        return account_number
+
+
+# {
+#    'foo': [
+#        'a',
+#        'b',
+#    ],
+#    'bar': True,
+# }
+class ListDictAction(
+            argparse.Action,
+        ):
+    def __init__(
+                self,
+                option_strings,
+                dest,
+                nargs,
+                **kwargs,
+            ):
+        super(
+        ).__init__(
+            option_strings,
+            dest,
+            nargs,
+            default={
+            },
+            type=colon_separated_key_value_pair,
+            **kwargs,
+        )
+
+    def __call__(
+                self,
+                parser,
+                namespace,
+                values,
+                option_string,
+            ):
+        dictionary = getattr(
+            namespace,
+            self.dest,
+        )
+
+        for value in values:
+            key = value[0]
+
+            try:
+                new_value = value[1]
+            except IndexError:
+                logger.debug(
+                    "key '%s': all enabled",
+                    key,
+                )
+                dictionary[key] = True
+            else:
+                logger.debug(
+                    "key '%s': new value: '%s'",
+                    key,
+                    new_value,
+                )
+                try:
+                    existing_values = dictionary[key]
+                except KeyError:
+                    dictionary[key] = [
+                        new_value,
+                    ]
+                else:
+                    existing_values.append(
+                        new_value,
+                    )
+
+        setattr(
+            namespace,
+            self.dest,
+            dictionary,
+        )
+
+
 def build_argument_parser(
         ):
-    default_logging_kwargs = {
-        'format': '%(levelname)s: %(message)s',
-        'level': logging.WARNING,
-    }
-
     argument_parser = argparse.ArgumentParser(
         add_help=True,
         allow_abbrev=False,
         description='Automation tool for Mullvad VPN setups on Linux',
-        epilog=f'Subcommands generally output nothing to stdout. Exit codes other than {os.EX_OK} (EX_OK) usually signal failure.',
+        # epilog=f'Subcommands generally output nothing to stdout. Exit codes other than {os.EX_OK} (EX_OK) usually signal failure.',
+        epilog=f'Exit codes other than {os.EX_OK} (EX_OK) usually signal failure.',
         formatter_class=argparse.HelpFormatter,
     )
 
@@ -34,63 +133,42 @@ def build_argument_parser(
         version=argbigga.version,
     )
 
-#    configuration_group = argument_parser.add_argument_group(
-#        description='foo the bar',
-#        title='configuration options',
-#    )
-#
-#    configuration_group.add_argument(
-#        '--config',
-#        action='store',
-#        default='/etc/argbigga/config.ini',
-#        dest='configuration_file',
-#        help='name without the .ini extension of a configuration file in /etc/argbigga/, or path to a configuration file',
-#        #metavar='NAME',
-#        type=argparse.FileType(
-#            mode='r',
-#        ),
-#    )
-#
-#    configuration_group.add_argument(
-#        '--profile',
-#        action='store',
-#        dest='configuration_profile',
-#        help='profile to load within configuration file',
-#        metavar='NAME',
-#    )
+    logging_group = argument_parser.add_argument_group(
+        title='logging options',
+    )
 
-#    debugging_group = argument_parser.add_argument_group(
-#        description='Control emission of informational messages.',
-#        title='debugging options',
-#    )
-
-    argument_parser.add_argument(
-#    debugging_group.add_argument(
+    logging_group.add_argument(
         '--debug',
         action='store_const',
-        const={
-            'format': '%(name)s: %(levelname)s: %(message)s',
-            'level': logging.DEBUG,
-        },
-        default=default_logging_kwargs,
-        dest='logging_kwargs',
-        help='output debugging logs to stderr',
+        const='debugging',
+        dest='logging_mode',
+        help='explain execution in detail',
     )
 
-    argument_parser.add_argument(
-#    debugging_group.add_argument(
+    logging_group.add_argument(
+        '--logs-destination',
+        action='store',
+        choices=argbigga.cli.logging.destinations.keys(
+        ),
+        default=argbigga.cli.logging.get_default_destination(
+        ),
+        dest='logs_destination',
+        help='system into which to output logs',
+    )
+
+    logging_group.add_argument(
         '--verbose',
         action='store_const',
-        const={
-            'format': '%(levelname)s: %(message)s',
-            'level': logging.INFO,
-        },
-        default=default_logging_kwargs,
-        dest='logging_kwargs',
-        help='emit informational messages to stderr',
+        const='verbose',
+        dest='logging_mode',
+        help='emit informational messages',
     )
 
-    subcommand_modules = argbigga.modutil.load_submodules(
+    argument_parser.set_defaults(
+        logging_mode='default',
+    )
+
+    subcommand_modules = argbigga.modules.load_submodules(
         package=argbigga.cli.subcommands.__name__,
         paths=argbigga.cli.subcommands.__path__,
     )
@@ -114,6 +192,27 @@ def build_argument_parser(
     return argument_parser
 
 
+def colon_separated_key_value_pair(
+            argument,
+        ):
+    items = argument.split(
+        sep=':',
+    )
+    amount_of_items = len(
+        items,
+    )
+    if amount_of_items == 1:
+        return items
+    if amount_of_items == 2:
+        if not items[1]:
+            del items[1]
+        return items
+    else:
+        raise argparse.ArgumentTypeError(
+            f'argument "{argument}" contains multiple colons (:)',
+        )
+
+
 def load_subcommand_argument_parsers(
             argument_parser,
             subcommand_modules,
@@ -124,6 +223,11 @@ def load_subcommand_argument_parsers(
     iterator = subcommand_modules.items(
     )
     for subcommand_name, subcommand_module in iterator:
+        logger.debug(
+            'loading subcommand `%s`',
+            subcommand_name,
+        )
+
         subcommand_parser = argument_parser.add_parser(
             subcommand_name,
             aliases=getattr(
@@ -140,6 +244,12 @@ def load_subcommand_argument_parsers(
                 argparse.HelpFormatter,
             ),
             help=subcommand_module.help,
+            parents=getattr(
+                subcommand_module,
+                'parents',
+                [
+                ],
+            ),
         )
 
         tree[subcommand_name] = {
@@ -149,15 +259,28 @@ def load_subcommand_argument_parsers(
         try:
             subcommand_submodules = subcommand_module._submodules
         except AttributeError:
-            subcommand_module.build_argument_parser(
-                argument_parser=subcommand_parser,
+            logger.debug(
+                'subcommand `%s` does not contain any subcommands',
+                subcommand_name,
             )
 
+            try:
+                build_subcommand_argument_parser = subcommand_module.build_argument_parser
+            except AttributeError:
+                pass
+            else:
+                build_subcommand_argument_parser(
+                    argument_parser=subcommand_parser,
+                )
+
             subcommand_parser.set_defaults(
-                run=subcommand_module.run,
+                subcommand=subcommand_module.run,
             )
         else:
-            # subcommand contains subcommands
+            logger.debug(
+                'subcommand `%s` contains subcommands',
+                subcommand_name,
+            )
 
             def run(
                         arguments,
@@ -166,7 +289,7 @@ def load_subcommand_argument_parsers(
                 )
 
             subcommand_parser.set_defaults(
-                run=run,
+                subcommand=run,
             )
 
             subsubparsers = subcommand_parser.add_subparsers(
@@ -182,3 +305,73 @@ def load_subcommand_argument_parsers(
             tree['subcommands'] = subtree
 
     return tree
+
+
+data_output = argparse.ArgumentParser(
+    add_help=False,
+)
+
+data_output_group = data_output.add_argument_group(
+    title='output options',
+)
+
+data_output_group.add_argument(
+    '--output-format',
+    action='store',
+    choices=[
+        'json',
+        'text',
+        'yaml',
+    ],
+    default='json',
+    dest='output_format',
+    help='format in which to output data',
+)
+
+data_output_group.add_argument(
+    '--output-to',
+    action='store',
+    default=sys.stdout,
+    # default='-',
+    dest='output_file',
+    help='path on which to save data',
+    metavar='PATH',
+    type=argparse.FileType(
+        mode='w',
+    ),
+)
+
+
+mullvad_account = argparse.ArgumentParser(
+    add_help=False,
+)
+
+mullvad_account_group = mullvad_account.add_argument_group(
+    title='Mullvad account number',
+)
+
+mullvad_account_group = mullvad_account_group.add_mutually_exclusive_group(
+    required=True,
+)
+
+# Passing Mullvad account numbers as command-line arguments would not be secure,
+# because command-line arguments are exposed through /proc.
+# Loading them from files is more secure,
+# and still flexible thanks to shell process substitution.
+mullvad_account_group.add_argument(
+    '--mullvad-account-number-from-file',
+    action='store',
+    dest='mullvad_account_id',
+    help='path to a file from which to load the Mullvad account number',
+    # help='path to a file-like object (such as returned by process substitution) containing the number of the Mullvad account on which to operate',
+    metavar='PATH',
+    type=FileLoadType(
+    ),
+)
+
+mullvad_account_group.add_argument(
+    '--mullvad-account-number-from-app',
+    action='store_true',
+    dest='mullvad_account_id',
+    help='load Mullvad account number from /etc/mullvad-vpn/settings.json',
+)
